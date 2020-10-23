@@ -15,9 +15,9 @@
 
 /*
 #	To Do List
-#	1) Setup command line arguments to feed in file
-#	2) read command line argument as file
-#	3) load json into objects
+#	1) Setup command line arguments to feed in file(done)
+#	2) read command line argument as file(done)
+#	3) load json into objects(done)
 #	4) Print out object.toString to validate loading
 */
 
@@ -85,6 +85,7 @@ class BlockRecord {
 		this.lName = lName;
 		this.dob = dob;
 	}
+	
 }
 
 public class C {
