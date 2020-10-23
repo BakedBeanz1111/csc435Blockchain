@@ -1,15 +1,9 @@
-/*# Create a named subdirectory with a 0-readme.txt file in it. 
-# In a single process, create a blockchain with four nodes in it: 
-# a dummy block zero, and three other simple blocks with a small 
-# amount of data in them. Demonstrate that you can convert the 
-# Java data contained in the simple block you have designed into 
-# string format, and that you can concatenate the "three elements" 
-# together, hash them, and come up with a result that is used to 
-# "verify" each block. In this simple version you can, e.g., make 
-# the puzzle so easy that it is solved every time. We will worry 
-# about work later. Use the Proof-of-Work field from the previous 
-# block as part of the data in the subsequent block. 
+/*  Copy the previous code, and translate your entire 
+	rudimentary blockchain into JSON format and write 
+	it to disk.
+*/
 
+/*
 # ToDo List:
 # Create a subdirectory: Named "working" (Done)
 # with a readme file called 0-readme.txt (Done)
@@ -18,13 +12,8 @@
 # Concatenate each block(done)
 # Hash Them(done)
 # Do something to "verify" them
+# Write JSON to disk
 */
-
-// I looked at the following links to help me do this piece of code
-// https://mkyong.com/java/how-to-parse-json-with-gson/ as introduced from BlockJ.java/how-to-parse-json-with-gson/
-// https://www.java67.com/2017/05/how-to-convert-java-object-to-json-using-Gson-example-tutorial.html
-// https://www.tutorialspoint.com/java/java_string_hashcode.htm
-
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -91,7 +80,7 @@ class BlockRecord {
 	}
 }
 
-public class A {
+public class B {
 
     public static void main(String[] args)throws IOException {
 		
@@ -119,6 +108,14 @@ public class A {
 		System.out.println(concatenatedBlocks.hashCode());
 		
 		//Verify Blocks
+		//Do a thing
+		
+		//Output to disk? Are we outputting single JSON files or a concatenated JSON?
+		BufferedWriter writer = new BufferedWriter(new FileWriter("BlockChain.json"));
+	    writer.write(concatenatedBlocks);
+	    writer.write(concatenatedBlocks);
+	    
+	    writer.close();
 		
     }
 
