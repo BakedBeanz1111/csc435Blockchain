@@ -6,8 +6,10 @@
  */
  
  /* To Do List
- #	1) Read BlockJ.java and get Process 
- #	2) Read in command line arguments
+ #	1) Read BlockJ.java and get Process(done)
+ #	2) Read in command line arguments(done)
+ #	3) Output setance with process number(done)
+ #	4) Press any key to continue(done)
  */
  
 public class D {
@@ -27,5 +29,4 @@ public class D {
 		
 		System.in.read()
 	}
-
 }
