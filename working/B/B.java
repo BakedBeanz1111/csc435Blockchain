@@ -12,7 +12,7 @@
 # Concatenate each block(done)
 # Hash Them(done)
 # Do something to "verify" them
-# Write JSON to disk
+# Write JSON to disk(done)
 */
 
 import com.google.gson.Gson;

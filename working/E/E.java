@@ -7,9 +7,9 @@
 
 /*
 #	To-Do List
-#	1) Copy code from D.java
-#	2) Insert a sleep command
-#	3) output message to console about process completion
+#	1) Copy code from D.java(done)
+#	2) Insert a sleep command(done)
+#	3) output message to console about process completion(done)
 */
 
 /*
