@@ -113,7 +113,6 @@ public class B {
 		//Output to disk? Are we outputting single JSON files or a concatenated JSON?
 		BufferedWriter writer = new BufferedWriter(new FileWriter("BlockChain.json"));
 	    writer.write(concatenatedBlocks);
-	    writer.write(concatenatedBlocks);
 	    
 	    writer.close();
 		
