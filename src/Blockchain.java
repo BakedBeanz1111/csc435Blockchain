@@ -22,8 +22,8 @@
 /*
 #	To-Do List
 #	1) Generate RSA Public/Private Keys(done)
-#	2) Define Data Block Object
-#	3) Define Block Record
+#	2) Define Data Block Object(done)
+#	3) Define Block Record(done)
 #	4) Define Blockchain
 #	5) More to be defined!
 */
@@ -91,15 +91,136 @@ class GenerateKeys{
 			System.err.println(e.getMessage());
 		}
 	}
-	
 }
 
-// Define Data Block Object
+// Define Data Block Object from input
+// I am basing this object off of the BlockInputX.txt files
+// I based the inspiration for this class from BlockInputG.java
 class DataBlock {
+	
+	//Default Values for object
+	private String firstName = "";
+	private String lastName = "";
+	private String ssn = "";
+	private String dob = "";
+	private String diagnosis = "";
+	private String treatment = "";
+	private String medication = "";
+	
+	//Getters
+	public String getFirstName() {
+		
+		return this.firstName;
+	}
+	public String getLastName() {
+		
+		return this.lastName;
+	}
+	public String getSSN() {
+		
+		return this.ssn;
+	}
+	public String getDOB() {
+		
+		return this.dob;
+	}
+	public String getDiagnosis() {
+		
+		return this.diagnosis;
+	}
+	public String getTreatment() {
+		
+		return this.getTreatment;
+	}
+	public String getMedication() {
+		
+		return this.medication;
+	}
+	
+	//Setters
+	public void setFirstName(String firstName) {
+	
+		this.firstName = firstName;
+	}
+	public void setLastName(String lastName) {
+	
+		this.lastName = lastName;
+	}
+	public void setSSN(String ssn) {
+	
+		this.ssn = ssn;
+	}
+	public void setDOB(String dob) {
+	
+		this.dob = dob;
+	}
+	public void setDiagnosis(String diagnosis) {
+	
+		this.diagnosis = diagnosis;
+	}
+	public void setTreatment(String treatment) {
+	
+		this.treatment = treatment;
+	}
+	public void setMedication(String medication) {
+	
+		this.medication = medication;
+	}
 }
 
 // Define Block Record
+//This was taken from BlockInputG.java
 class BlockRecord {
+	
+	String blockID;
+	String timeStamp;
+	String verificationProcessID;
+	String previousHash;
+	UUID uuid;
+	
+	//getters
+	public String getBlockID() {
+		
+		return this.blockID;
+	}
+	public String getTimeStamp() {
+		
+		return this.timeStamp;
+	}
+	public String getVerificationProcessID() {
+		
+		return this.verificationProcessID;
+	}
+	public String getPreviousHash() {
+		
+		return this.previousHash;
+	}
+	public UUID getUUID() {
+		
+		return this.uuid;
+	}
+	
+	//setters
+	public void setBlockID(String blockID) {
+	
+		this.blockID = blockID;
+	}
+	public void setTimeStamp(String timeStamp) {
+	
+		this.timeStamp = timeStamp;
+	}
+	public void setVerificationProcessID(String verificationProcessID) {
+	
+		this.verificationProcessID = verificationProcessID;
+	}
+	public void setPreviousHash(String previousHash) {
+	
+		this.previousHash = previousHash;
+	}
+	public void setUUID(UUID uuid) {
+	
+		this.uuid = uuid;
+	}
 }
 
 // Define BlockChain
