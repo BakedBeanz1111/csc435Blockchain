@@ -225,4 +225,16 @@ class BlockRecord {
 
 // Define BlockChain
 public class Blockchain {
+	
+	public static final int processCount = 3;
+	public static final int pid = 0;
+	public static final String serverName = "localhost";
+	public static final ArrayList<BlockRecord> ledger = new ArrayList<BlockRecord>();
+	
+	public static void main(String []args){
+	
+		String inputFile;
+		
+		if
+	}
 }
