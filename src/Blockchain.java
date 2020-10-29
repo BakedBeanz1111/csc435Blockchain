@@ -24,9 +24,14 @@
 #	1) Generate RSA Public/Private Keys(done)
 #	2) Define Data Block Object(done)
 #	3) Define Block Record(done)
-#	4) Define Blockchain
+#	4) Define Blockchain(Started)
 #	5) More to be defined!
 */
+
+import com.google.gson.*;
+import java.io.*;
+import java.net.*;
+import java.security.*;
 
 // To Generate RSA Public/Private Keys, I will be following the procedure outlined in this tutorial: https://mkyong.com/java/java-asymmetric-cryptography-example/
 class GenerateKeys{
@@ -62,7 +67,6 @@ class GenerateKeys{
 	public void writeToFile(String path, byte[] key) throws IOException {
 	
 		file f = new File(path);
-		
 		FileOutputStream fos = new FileOutputStream(f);
 		
 		fos.write(key);
@@ -90,6 +94,96 @@ class GenerateKeys{
 			
 			System.err.println(e.getMessage());
 		}
+	}
+}
+
+//To do AsymmetricCryptography, I will be following the procedure outlined in this tutorial: https://mkyong.com/java/java-asymmetric-cryptography-example/
+class AsymmetricCryptography{
+	
+	private Cipher cipher;
+	
+	public AsymmetricCryptography() throws NoSuchAlgorithmException, NoSuchPaddingException {
+		
+		this.cipher = Cipher.getInstance("RSA");
+	}
+	
+	public PrivateKey getPrivate(String filename) throws Exception {
+	
+		byte[] keyBytes = Files.readAllBytes(new File(filename).toPath());
+		PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
+		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+		
+		return keyFactory.generatePrivate(spec);
+	}
+	
+	public PublicKey getPublic(String filename) throws Exception {
+		
+		byte[] keyBytes = Files.readAllBytes(new File(filename).toPath());
+		X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+		
+		return keyFactory.generatePublic(spec);
+	}
+	
+	public void encryptFile(byte[] input, File output, PrivateKey key) throws IOException, GeneralSecurityException {
+		
+		this.cipher.init(Cipher.ENCRYPT_MODE, key);
+		writeToFile(output, this.cipher.doFinal(input));
+	}
+	
+	public void decryptFile(byte[] input, File output, PublicKey key) throws IOException, GeneralSecurityException {
+		
+		this.cipher.init(Cipher.DECRYPT_MODE, key);
+		writeToFile(output, this.cipher.doFinal(input));
+	}
+	
+	private void writeToFile(File output, byte[] toWrite) throws IllegalBlockSizeException, BadPaddingException, IOException {
+		
+		FileOutputStream fos = new FileOutputStream(output);
+		
+		fos.write(toWrite);
+		fos.flush();
+		fos.close();
+	}
+	
+	public String encryptText(String msg, PrivateKey key) throws NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
+		
+		this.cipher.init(Cipher.ENCRYPT_MODE, key);
+		return Base64.encodeBase64String(cipher.doFinal(msg.getBytes("UTF-8")));
+	}
+	
+	public String decryptText(String msg, PublicKey key) throws InvalidKeyException, UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException {
+		
+		this.cipher.init(Cipher.DECRYPT_MODE, key);
+		return new String(cipher.doFinal(Base64.decodeBase64(msg)), "UTF-8");
+	}
+	
+	public byte[] getFileInBytes(File f) throws IOException {
+		
+		FileInputStream fis = new FileInputStream(f);
+		byte[] fbytes = new byte[(int) f.length()];
+		
+		fis.read(fbytes);
+		fis.close();
+		return fbytes;
+	}
+	
+	public void testAsymmetricCryptography() throws Exception {
+	
+		AsymmetricCryptography ac = new AsymmetricCryptography();
+		PrivateKey privateKey = ac.getPrivate("id_rsa");
+		PublicKey publicKey = ac.getPublic("id_rsa.pub");
+		
+		String msg = "If you can read this, it worked!";
+		String encrypted_msg = ac.encryptText(msg, privateKey);
+		String decrypted_msg = ac.decryptText(encrypted_msg, publicKey);
+		
+		System.out.println("Original Message: " + msg);
+		System.out.println("Encrypted Message: " + encrypted_msg);
+		System.out.println("Decrypted Message: " + decrypted_msg);
+
+		ac.encryptFile(ac.getFileInBytes(new File("text.txt")), new File("text_encrypted.txt"),privateKey); //text.txt is generated during the build process of my batch script
+		ac.decryptFile(ac.getFileInBytes(new File("text_encrypted.txt")), new File("text_decrypted.txt"), publicKey);
 	}
 }
 
@@ -227,7 +321,7 @@ class BlockRecord {
 public class Blockchain {
 	
 	public static final int processCount = 3;
-	public static final int pid = 0;
+	public static int pid = 0;
 	public static final String serverName = "localhost";
 	public static final ArrayList<BlockRecord> ledger = new ArrayList<BlockRecord>();
 	
@@ -235,6 +329,37 @@ public class Blockchain {
 	
 		String inputFile;
 		
-		if
+		if(args.length == 0) {
+			
+			System.out.println("Since no Process ID was provided, defaulting to pid = 0");
+		}
+		else {
+			
+			pid = Integer.parseInt(args[0]);
+		}
+		
+		switch(pid) {
+		
+			case 0: {
+				
+				inputFile = "BlockInput0.txt";
+				break;
+			}
+			case 1: {
+				
+				inputFile = "BlockInput1.txt";
+				break;
+			}
+			case 2: {
+				
+				inputFile = "BlockInput2.txt";
+				break;
+			}
+			default: {
+			
+				inputFile = "BlockInput0.txt";
+				break;
+			}
+		}
 	}
 }
