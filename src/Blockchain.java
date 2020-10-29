@@ -25,7 +25,11 @@
 #	2) Define Data Block Object(done)
 #	3) Define Block Record(done)
 #	4) Define Blockchain(Started)
-#	5) More to be defined!
+#	5) Get 3 Blockchain processes to connect together
+#	6) Setup public key listener(started)
+#	7) Setup unverified Blocks listener(started)
+#	8) Setup update blockchain listener(started)
+#	9) Define Work
 */
 
 import com.google.gson.*;
@@ -187,6 +191,23 @@ class AsymmetricCryptography{
 	}
 }
 
+//Sets up a server to listen for Public Key Authentication
+//This is based on code we've been writing all term
+class PublicKeyListener extends Worker {
+
+	private Socket socket;
+	
+	PublicKeyListener(Socket socket) {
+		
+		this.socket = socket;
+	}
+	
+	public void run() {
+		
+		
+	}
+}
+
 // Define Data Block Object from input
 // I am basing this object off of the BlockInputX.txt files
 // I based the inspiration for this class from BlockInputG.java
@@ -317,6 +338,22 @@ class BlockRecord {
 	}
 }
 
+//UnverifiedBlockListener class
+class UnverifiedBlockListener extends Worker {
+
+	private Socket socket;
+	
+	UnverifiedBlockListener(Socket socket) {
+		
+		this.socket = s;
+	}
+	
+	public void run() {
+		
+		
+	}
+}
+
 // Define BlockChain
 public class Blockchain {
 	
@@ -324,7 +361,7 @@ public class Blockchain {
 	public static int pid = 0;
 	public static final String serverName = "localhost";
 	public static final ArrayList<BlockRecord> ledger = new ArrayList<BlockRecord>();
-	
+
 	public static void main(String []args){
 	
 		String inputFile;
@@ -361,5 +398,23 @@ public class Blockchain {
 				break;
 			}
 		}
+		
+
+	}
+}
+
+//UpdateBlockchainListener class
+class UpdateBlockchainListener extends Worker {
+
+	private Socket socket;
+	
+	UpdateBlockchainListener(Socket socket) {
+		
+		this.socket = s;
+	}
+	
+	public void run() {
+		
+		
 	}
 }
