@@ -21,15 +21,16 @@
 
 /*
 #	To-Do List
-#	1) Generate RSA Public/Private Keys(done)
-#	2) Define Data Block Object(done)
-#	3) Define Block Record(done)
-#	4) Define Blockchain(Started)
-#	5) Get 3 Blockchain processes to connect together
-#	6) Setup public key listener(started)
-#	7) Setup unverified Blocks listener(started)
-#	8) Setup update blockchain listener(started)
-#	9) Define Work
+#	1)  Generate RSA Public/Private Keys(done)
+#	2)  Define Data Block Object(done)
+#	3)  Define Block Record(done)
+#	4)  Define Blockchain(Started)
+#	5)  Get 3 Blockchain processes to connect together
+#	6)  Setup public key listener(started)
+#	7)  Setup unverified Blocks listener(started)
+#	8)  Setup update blockchain listener(started)
+#	9)  Define Work
+#	10)	Setup KeyManager
 */
 
 import com.google.gson.*;
@@ -193,6 +194,9 @@ class AsymmetricCryptography{
 
 //Sets up a server to listen for Public Key Authentication
 //This is based on code we've been writing all term. I based it off what was written for the JokeServer
+//Steps:
+// 1) Setup listener for a single thread(say thread 0)
+// 2) If public key is detected, load into key manager
 class PublicKeyListener extends Worker {
 
 	private Socket socket;
@@ -232,6 +236,8 @@ class PublicKeyListener extends Worker {
 		}
 	}
 }
+
+
 
 // Define Data Block Object from input
 // I am basing this object off of the BlockInputX.txt files
@@ -312,42 +318,70 @@ class DataBlock {
 //This was taken from BlockInputG.java
 class BlockRecord {
 	
-	String blockID;
-	String timeStamp;
-	String verificationProcessID;
-	String previousHash;
-	UUID uuid;
+	private DataBlock dataBlock = new DataBlock();
+	private int blockNumber = 0;
+	private String hashedDataBlock = "";
+	private String signedDataBlock = "";
+	private Date spawnTime = new Date();
+	private String blockID = "";
+	private String signedBlockID = "";
+	private String verificationProcessID = "";
+	private String previousHash = "";
 	
 	//getters
-	public String getBlockID() {
+	public String getBlockNumber() {
 		
-		return this.blockID;
+		return this.blockNumber;
 	}
-	public String getTimeStamp() {
-		
-		return this.timeStamp;
+	public String getHashedDataBlock() {
+	
+		return hashedDataBlock;
+	}
+	public String getSignedDataBlock() {
+	
+		return signedDataBlock;
+	}
+	public Date getSpawnTime() {
+	
+		return spawnTime;
+	}
+	public String getBlockID() {
+	
+		return blockID;
+	}
+	public String getSignedBlockID() {
+	
+		return signedBlockID;
 	}
 	public String getVerificationProcessID() {
-		
-		return this.verificationProcessID;
+	
+		return verificationProcessID;
 	}
 	public String getPreviousHash() {
 		
-		return this.previousHash;
-	}
-	public UUID getUUID() {
-		
-		return this.uuid;
+		return previousHash;
 	}
 	
 	//setters
+	public void setBlockNumber(int blockNumber) {
+	
+		this.blockNumber = blockNumber;
+	}
+	public void setHashedDataBlock(String hashedDataBlock) {
+	
+		this.hashedDataBlock = hashedDataBlock;
+	}
+	public void setSignedDataBlock(string signedDataBlock) {
+	
+		this.signedDataBlock = signedDataBlock;
+	}
+	public void setSpawnTime(Date spawnTime) {
+	
+		this.spawnTime = spawnTime;
+	}
 	public void setBlockID(String blockID) {
 	
 		this.blockID = blockID;
-	}
-	public void setTimeStamp(String timeStamp) {
-	
-		this.timeStamp = timeStamp;
 	}
 	public void setVerificationProcessID(String verificationProcessID) {
 	
@@ -356,10 +390,6 @@ class BlockRecord {
 	public void setPreviousHash(String previousHash) {
 	
 		this.previousHash = previousHash;
-	}
-	public void setUUID(UUID uuid) {
-	
-		this.uuid = uuid;
 	}
 }
 
