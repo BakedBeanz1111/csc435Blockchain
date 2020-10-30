@@ -30,7 +30,7 @@
 #	7)  Setup unverified Blocks listener(started)
 #	8)  Setup update blockchain listener(started)
 #	9)  Define Work
-#	10)	Setup KeyManager
+#	10) Setup DataManager
 */
 
 import com.google.gson.*;
@@ -39,6 +39,7 @@ import java.net.*;
 import java.security.*;
 
 // To Generate RSA Public/Private Keys, I will be following the procedure outlined in this tutorial: https://mkyong.com/java/java-asymmetric-cryptography-example/
+//This generates and writes keys
 class GenerateKeys{
 	
 	private KeyPairGenerator keyGen;
@@ -103,6 +104,7 @@ class GenerateKeys{
 }
 
 //To do AsymmetricCryptography, I will be following the procedure outlined in this tutorial: https://mkyong.com/java/java-asymmetric-cryptography-example/
+//This handles encryption/decryption
 class AsymmetricCryptography{
 	
 	private Cipher cipher;
@@ -237,7 +239,82 @@ class PublicKeyListener extends Worker {
 	}
 }
 
+// The following class handles the following:
+//	1) Reading input files(done not tested)
+//	2) Serialize Datablock(done not tested)
+//	3) Serialize BlockRecord(done not tested)
+//	4) Deserialize Datablock (done not tested)
+//	5) Deserialize BlockRecord (done not tested)
+//	6) Sending Data/blocks/keys
+class DataManager {
 
+	private static KeyGenerator keyGenerator;
+	
+	public static getKeyGenerator() {
+		
+		return keyGenerator;
+	}
+	
+	public static ArrayList<BlockRecord> ReadInputFile(String filename, int pid) {
+	
+		ArrayList<BlockRecord> blockRecords = new ArrayList<BlockRecord>();
+		String currentPID = Integer.toString(pid);
+		
+		try(BufferedReader br = new BufferedReader(new FileReader(filename))) {
+		
+			String input = br.readLine();
+			
+			while(input != null) {
+			
+				BlockRecord record = new BlockRecord();
+				
+				String[] inputData = input.split(" +");
+				
+				record.getDataBlock().setFirstName(inputData[0]);
+				record.getDataBlock().setLastName(inputData[1]);
+				record.getDataBlock().setDOB(inputData[2]);
+				record.getDataBlock().setSSN(inputData[3]);
+				record.getDataBlock().setDiagnosis(inputData[4]);
+				record.getDataBlock().setTreatment(inputData[5]);
+				record.getDataBlock().setMedication(inputData[6]);
+				
+				blockRecords.add(record);
+			}
+		}
+		catch (Exception e) {
+		
+			System.out.println("Data Manager error reading input file :" + e);
+		}
+		//Debug information about the records being collected
+		//System.out.println("Block Record Size: " + blockRecords.size());
+		
+		return blockRecords;
+	}
+	
+	public static String SerializeRecord(ArrayList<BlockRecord> blockRecords) {
+	
+		Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+		
+		return gson.toJson(blockRecords);
+	}
+	
+	public static String SerializeDataBlock(DataBlock dataBlock) {
+	
+		Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+		return gson.toJson(dataBlock);
+	}
+	
+	public static BlockRecord DeserializeRecord(String recordString) {
+	
+		return new Gson().fromJson(recordString, BlockRecord.class);
+	}
+	public static ArrayList<BlockRecord> DeserializeDataBlock(String ledgerString) {
+	
+		Type listType = new TypeToken<ArrayList<BlockRecord>>(){}.getType();
+		
+		return new Gson().fromJson(ledgerString, listType);
+	}
+}
 
 // Define Data Block Object from input
 // I am basing this object off of the BlockInputX.txt files
@@ -361,6 +438,10 @@ class BlockRecord {
 		
 		return previousHash;
 	}
+	public DataBlock getDataBlock() {
+		
+		return this.dataBlock;
+	}
 	
 	//setters
 	public void setBlockNumber(int blockNumber) {
@@ -391,6 +472,7 @@ class BlockRecord {
 	
 		this.previousHash = previousHash;
 	}
+
 }
 
 //UnverifiedBlockListener class
