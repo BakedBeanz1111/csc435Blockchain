@@ -192,7 +192,7 @@ class AsymmetricCryptography{
 }
 
 //Sets up a server to listen for Public Key Authentication
-//This is based on code we've been writing all term
+//This is based on code we've been writing all term. I based it off what was written for the JokeServer
 class PublicKeyListener extends Worker {
 
 	private Socket socket;
@@ -204,7 +204,32 @@ class PublicKeyListener extends Worker {
 	
 	public void run() {
 		
+		ObjectInputStream input;
+
+		try {
 		
+			in = new ObjectInputStream(this.socket.getInputStream());
+			
+			try {
+				
+				PublicKey publicKey = (PublicKey) in.readObject();
+				
+				System.out.println("publicKey is: " + publicKey.toString());
+			}
+			catch (Exception e) {
+			
+				System.out.println("PublicKeyListener error: " + e);
+			}
+			finally {
+			
+				in.close();
+				this.socket.close();
+			}
+		}
+		catch (IOException ex) {
+		
+			System.out.println("PublicKeyListener socket error: " + ex);
+		}
 	}
 }
 
