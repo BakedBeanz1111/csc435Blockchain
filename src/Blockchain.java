@@ -30,7 +30,8 @@
 #	7)  Setup unverified Blocks listener(started)
 #	8)  Setup update blockchain listener(started)
 #	9)  Define Work
-#	10) Setup DataManager
+#	10) Setup DataManager(started)
+#	11) Write method in Data Manager to send unverified blocks
 */
 
 import com.google.gson.*;
@@ -308,11 +309,40 @@ class DataManager {
 	
 		return new Gson().fromJson(recordString, BlockRecord.class);
 	}
+	
 	public static ArrayList<BlockRecord> DeserializeDataBlock(String ledgerString) {
 	
 		Type listType = new TypeToken<ArrayList<BlockRecord>>(){}.getType();
 		
 		return new Gson().fromJson(ledgerString, listType);
+	}
+	
+	public static void SendKeys(int[] serverPorts) {
+	
+		Socket socket;
+		ObjectOutputStream toServer;
+		
+		for(int i = 0; i < serverPorts.length; i++) {
+		
+			try {
+				
+				socket = new Socket(Blockchain.serverName, serverPorts[i];
+				toServer = new ObjectOutputStream(socket.getOutputStream());
+				
+				//Debug Information about keys
+				System.out.println("Sending keys to process " + i);
+				toServer.writeObject(keyGenerator.getPublicKey());
+				
+				toServer.flush();
+				toServer.close();
+				socket.close();
+			}
+			catch (IOException ex) {
+				
+				System.out.println("Error sending public keys from Data Manager: " + ex);
+				return;
+			}
+		}
 	}
 }
 
@@ -536,6 +566,47 @@ public class Blockchain {
 			}
 		}
 		
+		//Set ports for this process
+		
+		System.out.println("Using file: " + inputFile);
+		
+		//Start Threads for this process
+		try{
+		
+			
+		}
+		catch (Exception ex) {
+		
+			System.out.println("Main loop failed in starting threads: " + ex);
+		}
+		
+		//Block threads til Public Key available
+		try {
+			
+			while(DataManager.getKeyGenerator() == null) {
+			
+				Thread.sleep(3000);
+			}
+		}
+		catch{Exception ex) {
+			
+			System.out.println("Error while waiting for Public Key: " + ex);
+		}
+		
+		//Wait for all threads to start, when process 2 starts, send out the initial unverified blockID
+		if (pid == 2) {
+			
+			//Setup DataManager to send Unverified blocks	
+		}
+		
+		//Initial process has completed, now serialize blocks from file
+		ArrayList<BlockRecord> blockRecords = DataManager.ReadInputFile(inputFile, pid);
+		
+		//Send all the blocks!
+		for (BlockRecord blockRecord : blockRecords) {
+		
+			//Send over unverified blocks
+		}
 
 	}
 }
