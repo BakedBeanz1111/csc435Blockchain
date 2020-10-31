@@ -344,6 +344,48 @@ class DataManager {
 			}
 		}
 	}
+	
+	//Sending unverified Block
+	public static void SendUnverifiedBlocks(BlockRecord unverifiedBlock) {
+	
+		try {
+			
+			Socket socket;
+			PrintStream out;
+			
+			try {
+				
+				//socket = new Socket(server name, port);
+				out = new PrintStream(socket.getOutputStream());
+				
+				if(unverifiedBlock == null) {
+				
+					BlockRecord blockRecord = new BlockRecord();
+					
+					blockRecord.setBlockID("0");
+					//Set Process # for block process
+					
+					System.out.println("Send unverified block to be signed");
+					
+					out.println(SerializeRecord(record));
+					out.flush();
+				}
+			}
+			catch (IOException ex) {
+			
+				System.out.println("error sending unverified block " + ex);
+			}
+			finally {
+		
+				out.close();
+				socket.close();
+			}
+		}
+		catch(IOException ex) {
+		
+			System.out.println("Send Unverified Block error: " + ex);
+		}
+	}
 }
 
 // Define Data Block Object from input
@@ -533,6 +575,8 @@ public class Blockchain {
 	
 		String inputFile;
 		
+		//Define Port Structure
+		
 		if(args.length == 0) {
 			
 			System.out.println("Since no Process ID was provided, defaulting to pid = 0");
@@ -596,7 +640,8 @@ public class Blockchain {
 		//Wait for all threads to start, when process 2 starts, send out the initial unverified blockID
 		if (pid == 2) {
 			
-			//Setup DataManager to send Unverified blocks	
+			//Setup DataManager to send Unverified blocks
+			DataManager.SendUnverifiedBlocks(null);
 		}
 		
 		//Initial process has completed, now serialize blocks from file
@@ -606,6 +651,7 @@ public class Blockchain {
 		for (BlockRecord blockRecord : blockRecords) {
 		
 			//Send over unverified blocks
+			DataManager.SendUnverifiedBlocks(record);
 		}
 
 	}
