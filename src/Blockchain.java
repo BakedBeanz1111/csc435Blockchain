@@ -21,7 +21,7 @@
 
 /*
 #	To-Do List
-#	1)  Generate RSA Public/Private Keys(done)
+#	1)  Generate RSA Public/Private Keys(done and tested)
 #	2)  Define Data Block Object(done)
 #	3)  Define Block Record(done)
 #	4)  Define Blockchain(Started)
@@ -30,8 +30,9 @@
 #	7)  Setup unverified Blocks listener(started)
 #	8)  Setup update blockchain listener(started)
 #	9)  Define Work
-#	10) Setup DataManager(started)
-#	11) Write method in Data Manager to send unverified blocks
+#	10) Setup AsymmetricCryptography (done and tested)
+#	11) Setup data manager(done but not tested)
+#	12) Write Port Manager(done, not tested)
 */
 
 import com.google.gson.*;
@@ -40,7 +41,8 @@ import java.net.*;
 import java.security.*;
 
 // To Generate RSA Public/Private Keys, I will be following the procedure outlined in this tutorial: https://mkyong.com/java/java-asymmetric-cryptography-example/
-//This generates and writes keys
+// This generates and writes keys
+// Not Tested within Blockchain but tested as part of Development Guide
 class GenerateKeys{
 	
 	private KeyPairGenerator keyGen;
@@ -104,8 +106,8 @@ class GenerateKeys{
 	}
 }
 
-//To do AsymmetricCryptography, I will be following the procedure outlined in this tutorial: https://mkyong.com/java/java-asymmetric-cryptography-example/
-//This handles encryption/decryption
+// To do AsymmetricCryptography, I will be following the procedure outlined in this tutorial: https://mkyong.com/java/java-asymmetric-cryptography-example/
+// This handles encryption/decryption
 class AsymmetricCryptography{
 	
 	private Cipher cipher;
@@ -195,9 +197,9 @@ class AsymmetricCryptography{
 	}
 }
 
-//Sets up a server to listen for Public Key Authentication
-//This is based on code we've been writing all term. I based it off what was written for the JokeServer
-//Steps:
+// Sets up a server to listen for Public Key Authentication
+// This is based on code we've been writing all term. I based it off what was written for the JokeServer
+// Steps:
 // 1) Setup listener for a single thread(say thread 0)
 // 2) If public key is detected, load into key manager
 class PublicKeyListener extends Worker {
@@ -246,7 +248,7 @@ class PublicKeyListener extends Worker {
 //	3) Serialize BlockRecord(done not tested)
 //	4) Deserialize Datablock (done not tested)
 //	5) Deserialize BlockRecord (done not tested)
-//	6) Sending Data/blocks/keys
+//	6) Sending Data/blocks/keys(done not tested)
 class DataManager {
 
 	private static KeyGenerator keyGenerator;
@@ -465,6 +467,7 @@ class DataBlock {
 
 // Define Block Record
 //This was taken from BlockInputG.java
+//A Block Record is a collection of data blocks
 class BlockRecord {
 	
 	private DataBlock dataBlock = new DataBlock();
@@ -566,7 +569,7 @@ class UnverifiedBlockListener extends Worker {
 // Define BlockChain
 public class Blockchain {
 	
-	public static final int processCount = 3;
+	//public static final int processCount = 3;
 	public static int pid = 0;
 	public static final String serverName = "localhost";
 	public static final ArrayList<BlockRecord> ledger = new ArrayList<BlockRecord>();
@@ -670,5 +673,76 @@ class UpdateBlockchainListener extends Worker {
 	public void run() {
 		
 		
+	}
+}
+
+//Class for managing ports used for each process
+/* As per what was stated in the document
+
+	Ports and servers
+	Because we will have multiple participating processes running on the same machine we will need flexibility to avoid port conflicts. For each process:
+
+    Port 4710+process number receives public keys (4710, 4711, 4712)
+
+    Port 4820+process number receives unverified blocks (4820, 4821, 4822)
+
+    Port 4930+process number receives updated blockchains (4930, 4931, 4932)
+
+    Other ports at your discretion, but please use the same scheme: base+process number.
+
+    Feel free to use ten or twenty ports / servers if for some reason you need them, or not. This is entirely up to you. 
+
+*/
+class PortManager{
+
+	public static final int keyServerPort = 4710;
+	public static final int unverifiedBlockServerPort = 4820;
+	public static final int blockchainServerPort = 4930;
+	//KeyManagerPort
+	
+	
+	private static int[] keyServerPortsInUse = new int[3];
+	private static int[] unverifiedBlockServerPortsInUse = new int[3];
+	private static int[] blockchainServerPortsInUse = new int[3];
+	
+	private static int keyServerPortUsed;
+	private static int unverifiedBlockServerPortUsed;
+	private static int blockchainServerPortUsed;
+	
+	//Getters
+	public static int getKeyServerPortUsed() {
+	
+		return keyServerPortUsed;
+	}
+	public static int getUnverifiedBlockServerPortUsed() {
+	
+		return unverifiedBlockServerPortUsed;
+	}
+	public static int getBlockchainServerPortUsed() {
+	
+		return blockchainServerPortUsed;
+	}
+	public static int[] getKeyServerPortsInUse() {
+	
+		return keyServerPortsInUse;
+	}
+	public static int[] getUnverifiedBlockServerPortsInUse() {
+	
+		return unverifiedBlockServerPortsInUse;
+	}
+	public static int[] getBlockchainServerPortsInUse() {
+	
+		return blockchainServerPortsInUse;
+	}
+	
+	//Setters
+	public static void setPortsForAll() {
+	
+		for(int i = 0; i < 3; i++) {
+		
+			keyServerPortsInUse[i] = keyServerPort + i;
+			unverifiedBlockServerPortsInUse[i] = unverifiedBlockServerPort + i;
+			blockchainServerPortsInUse[i] = blockchainServerPort + i;
+		}
 	}
 }
