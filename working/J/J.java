@@ -9,9 +9,11 @@
 
 /*
 #	To-Do List
-#
-#
-#
+#	1) Setup Blockchain Listener
+#	2) Setup Public Key Listener
+#	3) 
 #
 #
 */
+
+//Blockchain Listener

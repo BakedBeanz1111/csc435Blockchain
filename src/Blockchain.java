@@ -26,13 +26,14 @@
 #	3)  Define Block Record(done)
 #	4)  Define Blockchain(Started)
 #	5)  Get 3 Blockchain processes to connect together
-#	6)  Setup public key listener(started)
-#	7)  Setup unverified Blocks listener(started)
-#	8)  Setup update blockchain listener(started)
+#	6)  Setup public key listener(done))
+#	7)  Setup unverified Blocks listener and worker(started)
+#	8)  Setup update blockchain listener and worker(started)
 #	9)  Define Work
 #	10) Setup AsymmetricCryptography (done and tested)
 #	11) Setup data manager(done but not tested)
 #	12) Write Port Manager(done, not tested)
+#	13)	
 */
 
 import com.google.gson.*;
@@ -43,7 +44,7 @@ import java.security.*;
 // To Generate RSA Public/Private Keys, I will be following the procedure outlined in this tutorial: https://mkyong.com/java/java-asymmetric-cryptography-example/
 // This generates and writes keys
 // Not Tested within Blockchain but tested as part of Development Guide
-class GenerateKeys{
+class GenerateKeys {
 	
 	private KeyPairGenerator keyGen;
 	private KeyPair pair;
@@ -201,8 +202,8 @@ class AsymmetricCryptography{
 // This is based on code we've been writing all term. I based it off what was written for the JokeServer
 // Steps:
 // 1) Setup listener for a single thread(say thread 0)
-// 2) If public key is detected, load into key manager
-class PublicKeyListener extends Worker {
+// 2) If public key is detected, load into key manager(done)
+class PublicKeyListener extends Thread {
 
 	private Socket socket;
 	
@@ -224,6 +225,13 @@ class PublicKeyListener extends Worker {
 				PublicKey publicKey = (PublicKey) in.readObject();
 				
 				System.out.println("publicKey is: " + publicKey.toString());
+				
+				//Check to see if Public Key is setup for this thread
+				//If Key isn't setup, generate key
+				if(DataManager.getKeyGenerator() == null) {
+
+					DataManager.setKeyGenerator(new KeyGenerator(publicKey);
+				}
 			}
 			catch (Exception e) {
 			
@@ -253,9 +261,14 @@ class DataManager {
 
 	private static KeyGenerator keyGenerator;
 	
-	public static getKeyGenerator() {
+	public static KeyGenerator getKeyGenerator() {
 		
 		return keyGenerator;
+	}
+	
+	public static void setKeyGenerator(KeyGenerator keyGenerator) {
+		
+		keyGenerator = keyGenerator;
 	}
 	
 	public static ArrayList<BlockRecord> ReadInputFile(String filename, int pid) {
@@ -304,6 +317,7 @@ class DataManager {
 	public static String SerializeDataBlock(DataBlock dataBlock) {
 	
 		Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+		
 		return gson.toJson(dataBlock);
 	}
 	
@@ -342,6 +356,7 @@ class DataManager {
 			catch (IOException ex) {
 				
 				System.out.println("Error sending public keys from Data Manager: " + ex);
+				
 				return;
 			}
 		}
@@ -468,7 +483,7 @@ class DataBlock {
 // Define Block Record
 //This was taken from BlockInputG.java
 //A Block Record is a collection of data blocks
-class BlockRecord {
+class BlockRecord implements Comparable<BlockRecord> {
 	
 	private DataBlock dataBlock = new DataBlock();
 	private int blockNumber = 0;
@@ -547,11 +562,17 @@ class BlockRecord {
 	
 		this.previousHash = previousHash;
 	}
+	
+	//Comparable
+	public int compareTo(BlockRecord blockRecord) {
+	
+		return this.spawnTime.compareTo(blockRecord.spawnTime);
+	}
 
 }
 
 //UnverifiedBlockListener class
-class UnverifiedBlockListener extends Worker {
+class UnverifiedBlockListener extends Thread {
 
 	private Socket socket;
 	
@@ -562,7 +583,42 @@ class UnverifiedBlockListener extends Worker {
 	
 	public void run() {
 		
+		System.out.println("Unverified Block Listener Started");
 		
+		BufferedReader in = null;
+		
+		try {
+			
+			in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+			
+			try {
+			
+				System.out.println("Reading in an unverified block!");
+				
+				String nextBlock = "";
+				String incomingBlock = in.readLine();
+				
+				while (incomingBlock != null) {
+				
+					nextBlock += incomingBlock;
+				}
+				
+				//Add block to queue and deserialize the block
+			}
+			catch (Exception ex) {
+				
+				System.out.println("Error receiving Unverified Block", ex);
+			}
+			finally {
+			
+				in.close();
+				this.socket.close();
+			}
+		}
+		catch (IOException ex) {
+			
+			System.out.println("Error reading in unverified block listener", ex);
+		}
 	}
 }
 
@@ -661,7 +717,7 @@ public class Blockchain {
 }
 
 //UpdateBlockchainListener class
-class UpdateBlockchainListener extends Worker {
+class UpdateBlockchainListener extends Thread {
 
 	private Socket socket;
 	
@@ -672,7 +728,37 @@ class UpdateBlockchainListener extends Worker {
 	
 	public void run() {
 		
+		System.out.println("Updating BLockchain Listener");
+		BufferedReader in;
 		
+		try {
+			
+			in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+			
+			try {
+				
+				String ledger = "";
+				String incomingBlock = in.readLine();
+				
+				while(incomingBlock != null) {
+				
+					ledger += incomingBlock;
+				}
+			}
+			catch (Exception ex) {
+			
+				System.out.println("error reading in the data");
+			}
+			finally {
+			
+				this.socket.close();
+				in.close();
+			}
+		}
+		catch (IOException ex) {
+		
+			System.out.println("Error reading from socket");
+		}
 	}
 }
 
@@ -699,7 +785,6 @@ class PortManager{
 	public static final int unverifiedBlockServerPort = 4820;
 	public static final int blockchainServerPort = 4930;
 	//KeyManagerPort
-	
 	
 	private static int[] keyServerPortsInUse = new int[3];
 	private static int[] unverifiedBlockServerPortsInUse = new int[3];

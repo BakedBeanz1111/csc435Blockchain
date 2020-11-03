@@ -13,9 +13,13 @@
 
 /*
 #	To-Do List
-#
-#
+#	1) Use work from project E
+#	2) Combine with project A
 #
 #
 #
 */
+
+//Implement sleep-enhanced work algorithm
+public class I {
+}
