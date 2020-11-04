@@ -26,16 +26,17 @@
 #	3)  Define Block Record(done)
 #	4)  Define Blockchain(Started)
 #	5)  Get 3 Blockchain processes to connect together
-#	6)  Setup public key listener and runner(listener started, runner not startd))
-#	7)  Setup unverified Blocks listener and runner(listener started, runner not started)
-#	8)  Setup update blockchain listener and runner(listener started, runner not started)
+#	6)  Setup public key listener and runner(listener started, runner startd))
+#	7)  Setup unverified Blocks listener and runner(listener started, runner started)
+#	8)  Setup update blockchain listener and runner(listener started, runner started)
 #	9)  Define Work
-#	10) Setup AsymmetricCryptography (done and tested)
-#	11) Setup data manager(done but not tested)
-#	12) Write Port Manager(done, not tested)
+#	10) Setup AsymmetricCryptography (done)
+#	11) Setup data manager(done)
+#	12) Write Port Manager(done)
 #	13)	
 */
 
+//Import Statements
 import com.google.gson.*;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
@@ -74,6 +75,7 @@ class GenerateKeys {
 		this.publicKey = pair.getPublic();
 	}
 	
+	//getters
 	public PrivateKey getPrivateKey() {
 	
 		return this.privateKey;
@@ -83,6 +85,8 @@ class GenerateKeys {
 	
 		return this.publicKey;
 	}
+	
+	//No Setters for Generating Keys
 	
 	public void writeToFile(String path, byte[] key) throws IOException {
 	
@@ -94,6 +98,8 @@ class GenerateKeys {
 		fos.close();
 	}
 	
+	//This function was written very early on in the assignment's development to test functionality for this bit of code
+	//This function never gets called
 	public void testGenerateKeys() {
 	
 		GenerateKeys gk;
@@ -166,6 +172,8 @@ class AsymmetricCryptography{
 		fos.flush();
 		fos.close();
 	}
+	
+	//The following was commented out because I was getting build issues with this segment of code that is actually superfluous to the assignment. But rule of thumb is I never delete anything, this needs to be cleaned up eventually
 	/*
 	public String encryptText(String msg, PrivateKey key) throws NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
 		
@@ -189,6 +197,8 @@ class AsymmetricCryptography{
 		return fbytes;
 	}
 	
+	//This function was written very early on in the assignment's development to test functionality for this bit of code
+	//This function never gets called
 	public void testAsymmetricCryptography() throws Exception {
 	
 		AsymmetricCryptography ac = new AsymmetricCryptography();
@@ -208,6 +218,7 @@ class AsymmetricCryptography{
 	}
 }
 
+// The idea behind KeyGeneratorRunner was to have the KeyGeneratorListener to trigger the runner to sign with the private key but I didn't get that far in the implementation
 class KeyGeneratorRunner extends Thread {
 
 	private Socket socket;
@@ -253,12 +264,8 @@ class KeyGeneratorRunner extends Thread {
 	}
 }
 
-// Sets up a server to listen for Public Key Authentication
 // This is based on code we've been writing all term. I based it off what was written for the JokeServer
-// Steps:
-// 1) Setup listener for a single thread(say thread 0)
-// 2) If public key is detected, load into key manager(done)
-// Done
+// The idea behind PublicKeyRunner was to have the PublicKeyListener to trigger the runner to make sure a key is set for this thread. I didn't get far enough into the project to test this functionality
 class PublicKeyRunner extends Thread {
 
 	private Socket socket;
@@ -286,6 +293,10 @@ class PublicKeyRunner extends Thread {
 				//If Key isn't setup, generate key
 				if(DataManager.getKeyGenerator() == null) {
 
+					//Create Key
+					GenerateKeys keyGen = new GenerateKeys(1024);
+					keyGen.createKeys();
+
 					DataManager.setKeyGenerator(new KeyGenerator(publicKey));
 				}
 			}
@@ -306,6 +317,9 @@ class PublicKeyRunner extends Thread {
 	}
 }
 
+//This sets up a listener on the appropriate port 
+//It waits for incoming connections on a port and spawns the PublicKeyRunner when it gets a connection
+//Did not get to test this due to time limit constraints
 class PublicKeyListener implements Runnable {
 
 	private int port;
@@ -338,10 +352,12 @@ class PublicKeyListener implements Runnable {
 		}
 	}
 }
-
+//This sets up a listener on the appropriate port 
+//It waits for incoming connections on a port and spawns the KeyGeneratorRunner when it gets a connection
+//Did not get to test this due to time limit constraints
 class KeyGeneratorListener implements Runnable {
 	
-	private int port = 1234;
+	private int port = 1234; //Just pulled some random port out of thin air as per the project spec under "Porst and Servers" on https://condor.depaul.edu/elliott/435/hw/programs/Blockchain/program-block.html
 	
 	public void run() {
 		
@@ -383,6 +399,8 @@ class KeyGeneratorListener implements Runnable {
 //	4) Deserialize Datablock (done not tested)
 //	5) Deserialize BlockRecord (done not tested)
 //	6) Sending Data/blocks/keys(done not tested)
+
+//The idea behind this class was to have a be all class for dealing with data. I did not get far enough into the project to test this
 class DataManager {
 
 	private static GenerateKeys keyGenerator;
@@ -435,14 +453,14 @@ class DataManager {
 	
 	public static String SerializeRecord(BlockRecord blockRecord) {
 	
-		Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+		Gson gson = new GsonBuilder().create();
 		
 		return gson.toJson(blockRecord);
 	}
 	
 	public static String SerializeDataBlock(DataBlock dataBlock) {
 	
-		Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+		Gson gson = new GsonBuilder().create();
 		
 		return gson.toJson(dataBlock);
 	}
@@ -501,6 +519,7 @@ class DataManager {
 				//socket = new Socket(server name, port);
 				out = new PrintStream(socket.getOutputStream());
 				
+				//If block does not exist, create the block
 				if(unverifiedBlock == null) {
 				
 					BlockRecord blockRecord = new BlockRecord();
@@ -513,6 +532,9 @@ class DataManager {
 					out.println(SerializeRecord(blockRecord));
 					out.flush();
 				}
+				//else 
+				//increment block id
+				//Serialize blockrecord
 			}
 			catch (IOException ex) {
 			
@@ -697,7 +719,8 @@ class BlockRecord implements Comparable<BlockRecord> {
 
 }
 
-//UnverifiedBlockRunner class
+// This is based on code we've been writing all term. I based it off what was written for the JokeServer
+// The idea behind UnverifiedBlockRunner was to have the UnverifiedBlockListener to trigger the runner to start. I didn't get far enough into the project to test this functionality
 class UnverifiedBlockRunner extends Thread {
 
 	private Socket socket;
@@ -729,7 +752,7 @@ class UnverifiedBlockRunner extends Thread {
 					nextBlock += incomingBlock;
 				}
 				
-				//Add block to queue and deserialize the block
+				//deserialize block
 			}
 			catch (Exception ex) {
 				
@@ -748,6 +771,9 @@ class UnverifiedBlockRunner extends Thread {
 	}
 }
 
+//This sets up a listener on the appropriate port 
+//It waits for incoming connections on a port and spawns the PublicKeyRunner when it gets a connection
+//Did not get to test this due to time limit constraints
 class UnverifiedBlockListener implements Runnable {
 
 	private int port;
@@ -782,6 +808,9 @@ class UnverifiedBlockListener implements Runnable {
 	}
 }
 
+//This sets up a listener on the appropriate port 
+//It waits for incoming connections on a port and spawns the PublicKeyRunner when it gets a connection
+//Did not get to test this due to time limit constraints
 class UnverifiedBlockWorker implements Runnable {
 	
 	public void run() {
@@ -857,9 +886,9 @@ public class Blockchain {
 		//Start Threads for this process
 		try{
 		
-				new Thread(new PublicKeyRunner(PortManager.getKeyServerPortUsed())).start();
-				new Thread(new UnverifiedBlockRunner(PortManager.getKeyServerPortUsed())).start();
-				new Thread(new UpdateBlockchainRunner(PortManager.getKeyServerPortUsed())).start();
+				//new Thread(new PublicKeyRunner(PortManager.getKeyServerPortUsed())).start();
+				//new Thread(new UnverifiedBlockRunner(PortManager.getKeyServerPortUsed())).start();
+				//new Thread(new UpdateBlockchainRunner(PortManager.getKeyServerPortUsed())).start();
 		}
 		catch (Exception ex) {
 		
@@ -944,6 +973,9 @@ class UpdateBlockchainRunner extends Thread {
 	}
 }
 
+//This sets up a listener on the appropriate port 
+//It waits for incoming connections on a port and spawns the PublicKeyRunner when it gets a connection
+//Did not get to test this due to time limit constraints
 class UpdateBlockchainListener implements Runnable {
 
 		private int port;
