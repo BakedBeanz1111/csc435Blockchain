@@ -26,9 +26,9 @@
 #	3)  Define Block Record(done)
 #	4)  Define Blockchain(Started)
 #	5)  Get 3 Blockchain processes to connect together
-#	6)  Setup public key listener(done))
-#	7)  Setup unverified Blocks listener and worker(started)
-#	8)  Setup update blockchain listener and worker(started)
+#	6)  Setup public key listener and runner(listener started, runner not startd))
+#	7)  Setup unverified Blocks listener and runner(listener started, runner not started)
+#	8)  Setup update blockchain listener and runner(listener started, runner not started)
 #	9)  Define Work
 #	10) Setup AsymmetricCryptography (done and tested)
 #	11) Setup data manager(done but not tested)
@@ -198,16 +198,52 @@ class AsymmetricCryptography{
 	}
 }
 
+class KeyGeneratorRunner extends Thread {
+
+	private Socket socket;
+	private KeyGenerator keyGen;
+	
+	KeyGeneratorRunner(Socket socket, KeyGenerator keyGen) {
+	
+		this.socket = socket;
+		this.keyGen = keyGen;
+	}
+	
+	public void run() {
+		
+		System.out.println("Key Generator Thread running!");
+		
+		PrintStream out;
+		BufferedReader in;
+		
+		try {
+			
+			
+			//Write Psuedocode here
+		}
+		catch (IOException ex) {
+			
+			System.out.println("KeyGen Runner Error! ", ex);
+		}
+		finally {
+			
+			this.socket.close();
+			in.close();
+		}
+	}
+}
+
 // Sets up a server to listen for Public Key Authentication
 // This is based on code we've been writing all term. I based it off what was written for the JokeServer
 // Steps:
 // 1) Setup listener for a single thread(say thread 0)
 // 2) If public key is detected, load into key manager(done)
-class PublicKeyListener extends Thread {
+// Done
+class PublicKeyRunner extends Thread {
 
 	private Socket socket;
 	
-	PublicKeyListener(Socket socket) {
+	PublicKeyRunner(Socket socket) {
 		
 		this.socket = socket;
 	}
@@ -235,7 +271,7 @@ class PublicKeyListener extends Thread {
 			}
 			catch (Exception e) {
 			
-				System.out.println("PublicKeyListener error: " + e);
+				System.out.println("PublicKeyRunner error: " + e);
 			}
 			finally {
 			
@@ -245,9 +281,78 @@ class PublicKeyListener extends Thread {
 		}
 		catch (IOException ex) {
 		
-			System.out.println("PublicKeyListener socket error: " + ex);
+			System.out.println("PublicKeyRunner socket error: " + ex);
 		}
 	}
+}
+
+class PublicKeyListener implements Runnable {
+
+	private int port;
+	
+	PublicKeyListener(int port) {
+	
+		this.port = port;
+	}
+	
+	public void run() {
+	
+		int queueLength = 6;
+		Socket socket;
+		
+		try {
+		
+			//Starting listener
+			ServerSocket serverSocket = new ServerSocket(port, queueLength);
+			
+			while (true) {
+			
+				socket = serverSocket.accept();
+				
+				new PublicKeyRunner(socket).start();
+			}
+		}
+		catch (IOException ex) {
+		
+			System.out.println("Failed to start listener for public keys ", ex);
+		}
+	}
+}
+
+class KeyGeneratorListener implements Runnable {
+	
+	private int port = 1234;
+	
+	public void run() {
+		
+		int queueLength = 6;
+		Socket socket;
+		
+		try {
+			
+			//Setup Listener
+			ServerSocket serverSocket = new ServerSocket(port, queueLength);
+			
+			//Create Key
+			KeyGenerator keyGen = new KeyGenerator();
+			keyGen.generateKeyPair();
+			
+			//Set Key
+			DataManager.setKeyGenerator(keyGen);
+			DataManager.SendKeys(PortManager.getKeyServerPortsInUse());
+			
+			while (true) {
+			
+				socket = serverSocket.accept();
+				
+				new KeyGeneratorRunner(socket, keyGen).start();
+			}				
+			
+		}
+		catch (IOException ex) {
+		
+			System.out.println("Failed to started Key Generator Listener ", ex);
+		}
 }
 
 // The following class handles the following:
@@ -571,19 +676,19 @@ class BlockRecord implements Comparable<BlockRecord> {
 
 }
 
-//UnverifiedBlockListener class
-class UnverifiedBlockListener extends Thread {
+//UnverifiedBlockRunner class
+class UnverifiedBlockRunner extends Thread {
 
 	private Socket socket;
 	
-	UnverifiedBlockListener(Socket socket) {
+	UnverifiedBlockRunner(Socket socket) {
 		
 		this.socket = s;
 	}
 	
 	public void run() {
 		
-		System.out.println("Unverified Block Listener Started");
+		System.out.println("Unverified Block Runner Started");
 		
 		BufferedReader in = null;
 		
@@ -617,9 +722,48 @@ class UnverifiedBlockListener extends Thread {
 		}
 		catch (IOException ex) {
 			
-			System.out.println("Error reading in unverified block listener", ex);
+			System.out.println("Error reading in unverified block runner", ex);
 		}
 	}
+}
+
+class UnverifiedBlockListener implements Runnable {
+
+	private int port;
+	
+	UnverifiedBlockListener (int port) {
+	
+		this.port = port;
+	}
+	
+	public void run() {
+		
+		int queueLength = 6;
+		Socket socket;
+		
+		try {
+			
+			//Starting listener
+			ServerSocket serverSocket = new ServerSocket(port, queueLength);
+			
+			while (true) {
+			
+				socket = serverSocket.accept();
+				
+				new UnverifiedBlockRunner(socket).start();
+			}
+			
+		}
+		catch (IOException ex) {
+			
+			System.out.println("Failed to read data from UnverifiedBlockListener ", ex);
+		}
+	}
+}
+
+class UnverifiedBlockWorker implements Runnable {
+	
+	//Write Psuedocode here
 }
 
 // Define BlockChain
@@ -633,8 +777,6 @@ public class Blockchain {
 	public static void main(String []args){
 	
 		String inputFile;
-		
-		//Define Port Structure
 		
 		if(args.length == 0) {
 			
@@ -650,33 +792,49 @@ public class Blockchain {
 			case 0: {
 				
 				inputFile = "BlockInput0.txt";
+				
 				break;
 			}
 			case 1: {
 				
 				inputFile = "BlockInput1.txt";
+				
 				break;
 			}
 			case 2: {
 				
 				inputFile = "BlockInput2.txt";
+				
 				break;
 			}
 			default: {
 			
 				inputFile = "BlockInput0.txt";
+				
 				break;
 			}
 		}
 		
-		//Set ports for this process
+		PortManager.setPortsForProcess(pid);
+		
+		//Start all threads for current pid
+		try {
+			
+			//new Thread().start();
+		}
+		catch (Exception ex) {
+			
+			System.out.println("Failed to start all threads in main ", ex);
+		}
 		
 		System.out.println("Using file: " + inputFile);
 		
 		//Start Threads for this process
 		try{
 		
-			
+				new Thread(new PublicKeyRunner(PortManager.getKeyServerPortUsed())).start();
+				new Thread(new UnverifiedBlockRunner(PortManager.getKeyServerPortUsed())).start();
+				new Thread(new UpdateBlockchainRunner(PortManager.getKeyServerPortUsed())).start();
 		}
 		catch (Exception ex) {
 		
@@ -712,23 +870,22 @@ public class Blockchain {
 			//Send over unverified blocks
 			DataManager.SendUnverifiedBlocks(record);
 		}
-
 	}
 }
 
-//UpdateBlockchainListener class
-class UpdateBlockchainListener extends Thread {
+//UpdateBlockchainRunner class
+class UpdateBlockchainRunner extends Thread {
 
 	private Socket socket;
 	
-	UpdateBlockchainListener(Socket socket) {
+	UpdateBlockchainRunner(Socket socket) {
 		
 		this.socket = s;
 	}
 	
 	public void run() {
 		
-		System.out.println("Updating BLockchain Listener");
+		System.out.println("Updating BLockchain Runner");
 		BufferedReader in;
 		
 		try {
@@ -762,6 +919,39 @@ class UpdateBlockchainListener extends Thread {
 	}
 }
 
+class UpdateBlockchainListener extends Runnable {
+
+		private int port;
+		
+		UpdateBlockchainListener(int port) {
+		
+			this.port = port;
+		}
+		
+		public void run() {
+		
+			int queueLength = 6;
+			Socket socket;
+			
+			try {
+				
+				ServerSocket serverSocket = new ServerSocket(port, queueLength);
+				
+				while (true) {
+				
+					socket = serverSocket.accept();
+					
+					new UpdateBlockchainRunner(socket).start();
+				}
+			
+			}
+			catch (IOException ex) {
+			
+				System.out.println("Failed to read data from socket on UpdateBlockchainListener ", ex);
+			}
+		}
+}
+
 //Class for managing ports used for each process
 /* As per what was stated in the document
 
@@ -784,7 +974,7 @@ class PortManager{
 	public static final int keyServerPort = 4710;
 	public static final int unverifiedBlockServerPort = 4820;
 	public static final int blockchainServerPort = 4930;
-	//KeyManagerPort
+	public static final int keyGenPort = 1234;
 	
 	private static int[] keyServerPortsInUse = new int[3];
 	private static int[] unverifiedBlockServerPortsInUse = new int[3];
@@ -821,13 +1011,10 @@ class PortManager{
 	}
 	
 	//Setters
-	public static void setPortsForAll() {
-	
-		for(int i = 0; i < 3; i++) {
+	public static void setPortsForProcess(int processNumber) {
 		
-			keyServerPortsInUse[i] = keyServerPort + i;
-			unverifiedBlockServerPortsInUse[i] = unverifiedBlockServerPort + i;
-			blockchainServerPortsInUse[i] = blockchainServerPort + i;
-		}
+		keyServerPortUsed = keyServerPort + processNumber;
+		unverifiedBlockServerPortUsed = unverifiedBlockServerPort + processNumber;
+		blockchainServerPortUsed = blockchainServerPortUsed + processNumber;
 	}
 }
