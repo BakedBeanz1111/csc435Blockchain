@@ -37,9 +37,19 @@
 */
 
 import com.google.gson.*;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
 import java.io.*;
 import java.net.*;
 import java.security.*;
+import javax.crypto.*;
+import java.util.*;
+import java.nio.file.*;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+import java.lang.reflect.Type;
 
 // To Generate RSA Public/Private Keys, I will be following the procedure outlined in this tutorial: https://mkyong.com/java/java-asymmetric-cryptography-example/
 // This generates and writes keys
@@ -76,7 +86,7 @@ class GenerateKeys {
 	
 	public void writeToFile(String path, byte[] key) throws IOException {
 	
-		file f = new File(path);
+		File f = new File(path);
 		FileOutputStream fos = new FileOutputStream(f);
 		
 		fos.write(key);
@@ -156,7 +166,7 @@ class AsymmetricCryptography{
 		fos.flush();
 		fos.close();
 	}
-	
+	/*
 	public String encryptText(String msg, PrivateKey key) throws NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
 		
 		this.cipher.init(Cipher.ENCRYPT_MODE, key);
@@ -167,7 +177,7 @@ class AsymmetricCryptography{
 		
 		this.cipher.init(Cipher.DECRYPT_MODE, key);
 		return new String(cipher.doFinal(Base64.decodeBase64(msg)), "UTF-8");
-	}
+	}*/
 	
 	public byte[] getFileInBytes(File f) throws IOException {
 		
@@ -186,12 +196,12 @@ class AsymmetricCryptography{
 		PublicKey publicKey = ac.getPublic("id_rsa.pub");
 		
 		String msg = "If you can read this, it worked!";
-		String encrypted_msg = ac.encryptText(msg, privateKey);
-		String decrypted_msg = ac.decryptText(encrypted_msg, publicKey);
+		//String encrypted_msg = ac.encryptText(msg, privateKey);
+		//String decrypted_msg = ac.decryptText(encrypted_msg, publicKey);
 		
 		System.out.println("Original Message: " + msg);
-		System.out.println("Encrypted Message: " + encrypted_msg);
-		System.out.println("Decrypted Message: " + decrypted_msg);
+		//System.out.println("Encrypted Message: " + encrypted_msg);
+		//System.out.println("Decrypted Message: " + decrypted_msg);
 
 		ac.encryptFile(ac.getFileInBytes(new File("text.txt")), new File("text_encrypted.txt"),privateKey); //text.txt is generated during the build process of my batch script
 		ac.decryptFile(ac.getFileInBytes(new File("text_encrypted.txt")), new File("text_decrypted.txt"), publicKey);
@@ -201,9 +211,9 @@ class AsymmetricCryptography{
 class KeyGeneratorRunner extends Thread {
 
 	private Socket socket;
-	private KeyGenerator keyGen;
+	private GenerateKeys keyGen;
 	
-	KeyGeneratorRunner(Socket socket, KeyGenerator keyGen) {
+	KeyGeneratorRunner(Socket socket, GenerateKeys keyGen) {
 	
 		this.socket = socket;
 		this.keyGen = keyGen;
@@ -213,23 +223,33 @@ class KeyGeneratorRunner extends Thread {
 		
 		System.out.println("Key Generator Thread running!");
 		
-		PrintStream out;
-		BufferedReader in;
+		PrintStream out = null;
+		BufferedReader in = null;
 		
+		/*
 		try {
 			
-			
+			in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
 			//Write Psuedocode here
+			
+			try {
+				
+				
+			}
+			catch (Exception ex) {
+			
+				System.out.println("KeyGenRunner error: " + ex);
+			}
 		}
 		catch (IOException ex) {
 			
-			System.out.println("KeyGen Runner Error! ", ex);
+			System.out.println("KeyGen Runner Error! " + ex);
 		}
 		finally {
 			
 			this.socket.close();
 			in.close();
-		}
+		}*/
 	}
 }
 
@@ -254,11 +274,11 @@ class PublicKeyRunner extends Thread {
 
 		try {
 		
-			in = new ObjectInputStream(this.socket.getInputStream());
+			input = new ObjectInputStream(this.socket.getInputStream());
 			
 			try {
 				
-				PublicKey publicKey = (PublicKey) in.readObject();
+				PublicKey publicKey = (PublicKey) input.readObject();
 				
 				System.out.println("publicKey is: " + publicKey.toString());
 				
@@ -266,7 +286,7 @@ class PublicKeyRunner extends Thread {
 				//If Key isn't setup, generate key
 				if(DataManager.getKeyGenerator() == null) {
 
-					DataManager.setKeyGenerator(new KeyGenerator(publicKey);
+					DataManager.setKeyGenerator(new KeyGenerator(publicKey));
 				}
 			}
 			catch (Exception e) {
@@ -275,7 +295,7 @@ class PublicKeyRunner extends Thread {
 			}
 			finally {
 			
-				in.close();
+				input.close();
 				this.socket.close();
 			}
 		}
@@ -314,7 +334,7 @@ class PublicKeyListener implements Runnable {
 		}
 		catch (IOException ex) {
 		
-			System.out.println("Failed to start listener for public keys ", ex);
+			System.out.println("Failed to start listener for public keys " + ex);
 		}
 	}
 }
@@ -334,8 +354,8 @@ class KeyGeneratorListener implements Runnable {
 			ServerSocket serverSocket = new ServerSocket(port, queueLength);
 			
 			//Create Key
-			KeyGenerator keyGen = new KeyGenerator();
-			keyGen.generateKeyPair();
+			GenerateKeys keyGen = new GenerateKeys(1024);
+			keyGen.createKeys();
 			
 			//Set Key
 			DataManager.setKeyGenerator(keyGen);
@@ -351,8 +371,9 @@ class KeyGeneratorListener implements Runnable {
 		}
 		catch (IOException ex) {
 		
-			System.out.println("Failed to started Key Generator Listener ", ex);
+			System.out.println("Failed to started Key Generator Listener " + ex);
 		}
+	}
 }
 
 // The following class handles the following:
@@ -364,14 +385,14 @@ class KeyGeneratorListener implements Runnable {
 //	6) Sending Data/blocks/keys(done not tested)
 class DataManager {
 
-	private static KeyGenerator keyGenerator;
+	private static GenerateKeys keyGenerator;
 	
-	public static KeyGenerator getKeyGenerator() {
+	public static GenerateKeys getKeyGenerator() {
 		
 		return keyGenerator;
 	}
 	
-	public static void setKeyGenerator(KeyGenerator keyGenerator) {
+	public static void setKeyGenerator(GenerateKeys keyGenerator) {
 		
 		keyGenerator = keyGenerator;
 	}
@@ -412,11 +433,11 @@ class DataManager {
 		return blockRecords;
 	}
 	
-	public static String SerializeRecord(ArrayList<BlockRecord> blockRecords) {
+	public static String SerializeRecord(BlockRecord blockRecord) {
 	
 		Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 		
-		return gson.toJson(blockRecords);
+		return gson.toJson(blockRecord);
 	}
 	
 	public static String SerializeDataBlock(DataBlock dataBlock) {
@@ -447,7 +468,7 @@ class DataManager {
 		
 			try {
 				
-				socket = new Socket(Blockchain.serverName, serverPorts[i];
+				socket = new Socket(Blockchain.serverName, serverPorts[i]);
 				toServer = new ObjectOutputStream(socket.getOutputStream());
 				
 				//Debug Information about keys
@@ -489,7 +510,7 @@ class DataManager {
 					
 					System.out.println("Send unverified block to be signed");
 					
-					out.println(SerializeRecord(record));
+					out.println(SerializeRecord(blockRecord));
 					out.flush();
 				}
 			}
@@ -547,7 +568,7 @@ class DataBlock {
 	}
 	public String getTreatment() {
 		
-		return this.getTreatment;
+		return this.treatment;
 	}
 	public String getMedication() {
 		
@@ -601,9 +622,9 @@ class BlockRecord implements Comparable<BlockRecord> {
 	private String previousHash = "";
 	
 	//getters
-	public String getBlockNumber() {
+	public int getBlockNumber() {
 		
-		return this.blockNumber;
+		return blockNumber;
 	}
 	public String getHashedDataBlock() {
 	
@@ -647,7 +668,7 @@ class BlockRecord implements Comparable<BlockRecord> {
 	
 		this.hashedDataBlock = hashedDataBlock;
 	}
-	public void setSignedDataBlock(string signedDataBlock) {
+	public void setSignedDataBlock(String signedDataBlock) {
 	
 		this.signedDataBlock = signedDataBlock;
 	}
@@ -683,7 +704,7 @@ class UnverifiedBlockRunner extends Thread {
 	
 	UnverifiedBlockRunner(Socket socket) {
 		
-		this.socket = s;
+		this.socket = socket;
 	}
 	
 	public void run() {
@@ -712,7 +733,7 @@ class UnverifiedBlockRunner extends Thread {
 			}
 			catch (Exception ex) {
 				
-				System.out.println("Error receiving Unverified Block", ex);
+				System.out.println("Error receiving Unverified Block " + ex);
 			}
 			finally {
 			
@@ -722,7 +743,7 @@ class UnverifiedBlockRunner extends Thread {
 		}
 		catch (IOException ex) {
 			
-			System.out.println("Error reading in unverified block runner", ex);
+			System.out.println("Error reading in unverified block runner: " + ex);
 		}
 	}
 }
@@ -756,14 +777,18 @@ class UnverifiedBlockListener implements Runnable {
 		}
 		catch (IOException ex) {
 			
-			System.out.println("Failed to read data from UnverifiedBlockListener ", ex);
+			System.out.println("Failed to read data from UnverifiedBlockListener " + ex);
 		}
 	}
 }
 
 class UnverifiedBlockWorker implements Runnable {
 	
-	//Write Psuedocode here
+	public void run() {
+	
+		System.out.println("Write Psuedocode here");
+	}
+	
 }
 
 // Define BlockChain
@@ -824,7 +849,7 @@ public class Blockchain {
 		}
 		catch (Exception ex) {
 			
-			System.out.println("Failed to start all threads in main ", ex);
+			System.out.println("Failed to start all threads in main " + ex);
 		}
 		
 		System.out.println("Using file: " + inputFile);
@@ -849,7 +874,7 @@ public class Blockchain {
 				Thread.sleep(3000);
 			}
 		}
-		catch{Exception ex) {
+		catch (Exception ex) {
 			
 			System.out.println("Error while waiting for Public Key: " + ex);
 		}
@@ -868,7 +893,7 @@ public class Blockchain {
 		for (BlockRecord blockRecord : blockRecords) {
 		
 			//Send over unverified blocks
-			DataManager.SendUnverifiedBlocks(record);
+			DataManager.SendUnverifiedBlocks(blockRecord);
 		}
 	}
 }
@@ -880,7 +905,7 @@ class UpdateBlockchainRunner extends Thread {
 	
 	UpdateBlockchainRunner(Socket socket) {
 		
-		this.socket = s;
+		this.socket = socket;
 	}
 	
 	public void run() {
@@ -919,7 +944,7 @@ class UpdateBlockchainRunner extends Thread {
 	}
 }
 
-class UpdateBlockchainListener extends Runnable {
+class UpdateBlockchainListener implements Runnable {
 
 		private int port;
 		
@@ -947,7 +972,7 @@ class UpdateBlockchainListener extends Runnable {
 			}
 			catch (IOException ex) {
 			
-				System.out.println("Failed to read data from socket on UpdateBlockchainListener ", ex);
+				System.out.println("Failed to read data from socket on UpdateBlockchainListener " + ex);
 			}
 		}
 }
@@ -969,7 +994,7 @@ class UpdateBlockchainListener extends Runnable {
     Feel free to use ten or twenty ports / servers if for some reason you need them, or not. This is entirely up to you. 
 
 */
-class PortManager{
+class PortManager {
 
 	public static final int keyServerPort = 4710;
 	public static final int unverifiedBlockServerPort = 4820;
