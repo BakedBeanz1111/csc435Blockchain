@@ -16,7 +16,12 @@
 					java BlockChain [ProcessNumber]			where [ProcessNumber] is [0,1,2]
     
 	Also:
-					You can use the provided batch script to run the project. Please read the batch script before you run it!
+					You can use the provided batch script to run the project. Please read the batch script before you run it! EDIT!!! No Batch script provided since I didn't get this thing working :(
+					The batch script would have done the following:
+					1) Clean and sanitize the build environment(delete .class/.txt/keys)
+					2) Compile Java Code
+					3) Start 3 processes like this:		java Blockchain 0/java Blockchain 1/java Blockchain 2
+					
 */
 
 /*
@@ -219,6 +224,7 @@ class AsymmetricCryptography{
 }
 
 // The idea behind KeyGeneratorRunner was to have the KeyGeneratorListener to trigger the runner to sign with the private key but I didn't get that far in the implementation
+// I based this work off of what we did all quarter with javing a Server Listener and a Worker thread, just like in the joke server assignment
 class KeyGeneratorRunner extends Thread {
 
 	private Socket socket;
@@ -357,7 +363,7 @@ class PublicKeyListener implements Runnable {
 //Did not get to test this due to time limit constraints
 class KeyGeneratorListener implements Runnable {
 	
-	private int port = 1234; //Just pulled some random port out of thin air as per the project spec under "Porst and Servers" on https://condor.depaul.edu/elliott/435/hw/programs/Blockchain/program-block.html
+	private int[] ports = new int[] {1234, 1235, 1236}; //Just pulled some random port out of thin air as per the project spec under "Porst and Servers" on https://condor.depaul.edu/elliott/435/hw/programs/Blockchain/program-block.html
 	
 	public void run() {
 		
@@ -367,7 +373,7 @@ class KeyGeneratorListener implements Runnable {
 		try {
 			
 			//Setup Listener
-			ServerSocket serverSocket = new ServerSocket(port, queueLength);
+			ServerSocket serverSocket = new ServerSocket(1234, queueLength);
 			
 			//Create Key
 			GenerateKeys keyGen = new GenerateKeys(1024);
@@ -375,7 +381,7 @@ class KeyGeneratorListener implements Runnable {
 			
 			//Set Key
 			DataManager.setKeyGenerator(keyGen);
-			DataManager.SendKeys(PortManager.getKeyServerPortsInUse());
+			DataManager.SendKeys(ports);
 			
 			while (true) {
 			
@@ -401,6 +407,7 @@ class KeyGeneratorListener implements Runnable {
 //	6) Sending Data/blocks/keys(done not tested)
 
 //The idea behind this class was to have a be all class for dealing with data. I did not get far enough into the project to test this
+// I used the following document as the guidance for handling all gson operations: https://mkyong.com/java/how-to-parse-json-with-gson/
 class DataManager {
 
 	private static GenerateKeys keyGenerator;
@@ -631,6 +638,7 @@ class DataBlock {
 // Define Block Record
 //This was taken from BlockInputG.java
 //A Block Record is a collection of data blocks
+// I found the inspiration for the comparator from this article while doing development Guide assignment M: https://www.callicoder.com/java-priority-queue/
 class BlockRecord implements Comparable<BlockRecord> {
 	
 	private DataBlock dataBlock = new DataBlock();
@@ -823,7 +831,6 @@ class UnverifiedBlockWorker implements Runnable {
 // Define BlockChain
 public class Blockchain {
 	
-	//public static final int processCount = 3;
 	public static int pid = 0;
 	public static final String serverName = "localhost";
 	public static final ArrayList<BlockRecord> ledger = new ArrayList<BlockRecord>();
@@ -832,6 +839,7 @@ public class Blockchain {
 	
 		String inputFile;
 		
+		//Set command line arguments about thread/process
 		if(args.length == 0) {
 			
 			System.out.println("Since no Process ID was provided, defaulting to pid = 0");
@@ -841,6 +849,7 @@ public class Blockchain {
 			pid = Integer.parseInt(args[0]);
 		}
 		
+		//Define input file
 		switch(pid) {
 		
 			case 0: {
@@ -869,8 +878,6 @@ public class Blockchain {
 			}
 		}
 		
-		PortManager.setPortsForProcess(pid);
-		
 		//Start all threads for current pid
 		try {
 			
@@ -885,10 +892,7 @@ public class Blockchain {
 		
 		//Start Threads for this process
 		try{
-		
-				//new Thread(new PublicKeyRunner(PortManager.getKeyServerPortUsed())).start();
-				//new Thread(new UnverifiedBlockRunner(PortManager.getKeyServerPortUsed())).start();
-				//new Thread(new UpdateBlockchainRunner(PortManager.getKeyServerPortUsed())).start();
+			System.out.println("Launch all the threads and set all the ports!");
 		}
 		catch (Exception ex) {
 		
@@ -1007,71 +1011,4 @@ class UpdateBlockchainListener implements Runnable {
 				System.out.println("Failed to read data from socket on UpdateBlockchainListener " + ex);
 			}
 		}
-}
-
-//Class for managing ports used for each process
-/* As per what was stated in the document
-
-	Ports and servers
-	Because we will have multiple participating processes running on the same machine we will need flexibility to avoid port conflicts. For each process:
-
-    Port 4710+process number receives public keys (4710, 4711, 4712)
-
-    Port 4820+process number receives unverified blocks (4820, 4821, 4822)
-
-    Port 4930+process number receives updated blockchains (4930, 4931, 4932)
-
-    Other ports at your discretion, but please use the same scheme: base+process number.
-
-    Feel free to use ten or twenty ports / servers if for some reason you need them, or not. This is entirely up to you. 
-
-*/
-class PortManager {
-
-	public static final int keyServerPort = 4710;
-	public static final int unverifiedBlockServerPort = 4820;
-	public static final int blockchainServerPort = 4930;
-	public static final int keyGenPort = 1234;
-	
-	private static int[] keyServerPortsInUse = new int[3];
-	private static int[] unverifiedBlockServerPortsInUse = new int[3];
-	private static int[] blockchainServerPortsInUse = new int[3];
-	
-	private static int keyServerPortUsed;
-	private static int unverifiedBlockServerPortUsed;
-	private static int blockchainServerPortUsed;
-	
-	//Getters
-	public static int getKeyServerPortUsed() {
-	
-		return keyServerPortUsed;
-	}
-	public static int getUnverifiedBlockServerPortUsed() {
-	
-		return unverifiedBlockServerPortUsed;
-	}
-	public static int getBlockchainServerPortUsed() {
-	
-		return blockchainServerPortUsed;
-	}
-	public static int[] getKeyServerPortsInUse() {
-	
-		return keyServerPortsInUse;
-	}
-	public static int[] getUnverifiedBlockServerPortsInUse() {
-	
-		return unverifiedBlockServerPortsInUse;
-	}
-	public static int[] getBlockchainServerPortsInUse() {
-	
-		return blockchainServerPortsInUse;
-	}
-	
-	//Setters
-	public static void setPortsForProcess(int processNumber) {
-		
-		keyServerPortUsed = keyServerPort + processNumber;
-		unverifiedBlockServerPortUsed = unverifiedBlockServerPort + processNumber;
-		blockchainServerPortUsed = blockchainServerPortUsed + processNumber;
-	}
 }
